@@ -1,5 +1,4 @@
-import code
-# code.interact(local=locals())
+#import code code.interact(local=locals())
 
 from lib.twitter_man import tman
 import lib.sentiment as senty
