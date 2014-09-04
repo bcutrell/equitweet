@@ -1,0 +1,25 @@
+TWITTER RATE ERROR MESSAGE
+
+Traceback (most recent call last):
+  File "tasks.py", line 5, in <module>
+    seed_tweets.run()
+  File "/Users/bcutrell/python/equitweet/lib/seeder.py", line 70, in run
+    tweets = self.grab_tweets(ticker)
+  File "/Users/bcutrell/python/equitweet/lib/seeder.py", line 48, in grab_tweets
+    return self.twitter_client.search.tweets(q='$' + ticker)
+  File "/Library/Python/2.7/site-packages/twitter/api.py", line 245, in __call__
+    return self._handle_response(req, uri, arg_data, _timeout)
+  File "/Library/Python/2.7/site-packages/twitter/api.py", line 276, in _handle_response
+    raise TwitterHTTPError(e, uri, self.format, arg_data)
+twitter.api.TwitterHTTPError: Twitter sent status 429 for URL: 1.1/search/tweets.json using parameters: (oauth_consumer_key=fB8iC9OEpTeXvxWeVWiwIw&oauth_nonce=14664033011907491683&oauth_signature_method=HMAC-SHA1&oauth_timestamp=1409837260&oauth_token=428656478-i4c2DU3IYUfvd87FqiooO7bxx0dBRxOTads6sg1h&oauth_version=1.0&q=%24EXPD&oauth_signature=FI6FrSOsEM1lXQllXPbHiUWoghA%3D)
+details: {"errors":[{"message":"Rate limit exceeded","code":88}]}
+
+for row in sp_data.iterrows():
+	ticker = row['Symbol']
+	for attempt in range(3):
+		try:
+			tweets = tman.search.tweets(q='$' + ticker)
+			break
+		except:
+			# Pause
+			continue
