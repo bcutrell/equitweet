@@ -6,9 +6,8 @@ CREATE TABLE stocks (
 		
 CREATE TABLE tweets (
 	ticker   varchar(8) references stocks(ticker),
-	username varchar(15), -- increase length
+	username varchar(20), -- increase length
 	tweet_id   bigint, -- id from twitter
-	tweet_text  varchar(140), -- increase length
 	followers_count  int,
 	polarity    double precision,
 	subjectivity    double precision,

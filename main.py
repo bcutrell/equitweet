@@ -1,24 +1,31 @@
-## just examples for now
-## this should hold python notebook steps for
-## examining db
-import code 
+import code #code.interact(local=locals())
 from lib.twitter_man import tman
 from lib.postgres_db import MyDB
 import numpy as np
 import pandas as pd
+import pandas.io.data as web
+import matplotlib.pyplot as plt
+import datetime
 
-# Get all S and P 500 data
-sp_data = pd.read_csv('data/constituents.csv')
-# sp[sp['Symbol'] == 'ABT']
+### query examples ###
 
-# search Twitter
-results = tman.search.tweets(q="$ABT")
+# sql = "select * from medicine_journal where medication = '%(medicine)s'"
+# pd.io.sql.read_frame(sql % {'medicine':'flonase'}, conn)
 
-# iter through search results
-for value in results.values()[1]:
-	code.interact(local=locals())
-	print value['text']
+my_db = MyDB()
+conn = my_db._db_connection
 
-# iter through s&p tickers
-for sym in sp_data['Symbol']:
-	print sym
+sql = "select * from tweets"
+# Create a dataframe that consists of the data defined by our SQL
+df = pd.io.sql.read_frame(sql, conn) # change to read sql
+conn.close() # close after we create dataframe
+
+df[df['polarity'] > 0.5] # all polarity > 0.5
+np.mean(df['polarity'].values) # avg of all polarity
+
+# stock info
+start = datetime.datetime(2010, 1, 1)
+end = datetime.datetime(2013, 1, 27)
+
+f = web.DataReader("F", 'yahoo', start, end)
+code.interact(local=locals())
