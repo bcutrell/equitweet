@@ -20,6 +20,9 @@ class MyDB(object):
     def fetchall(self):
         return self._db_cur.fetchall()
 
+    def copy_expert(self, *args, **kwargs):
+        return self._db_cur.copy_expert(*args, **kwargs)
+
     def commit(self):
         self._db_connection.commit()
 
