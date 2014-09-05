@@ -7,15 +7,16 @@ import oauth
 import json
 import time, sys
 
-############################
-# STOCKS
-############################
-class SeedStocks(object):
-	""" For the time being this should only be run once """
+class Seeder(object):
 	def __init__(self):
 		self.sp_data = pd.read_csv('./data/constituents.csv')
 		self.db = MyDB()
 
+############################
+# STOCKS
+############################
+class SeedStocks(Seeder):
+	""" For the time being this should only be run once """
 	def run(self):
 		for index, row in self.sp_data.iterrows():
 			self.db.query("SELECT * FROM stocks WHERE ticker = %s", (row['Ticker'],))
@@ -29,11 +30,9 @@ class SeedStocks(object):
 ############################
 # TWEETS
 ############################
-class SeedTweets(object):
+class SeedTweets(Seeder):
 	""" Populates Tweets Table -- Should be Run Daily """
 	def __init__(self):
-		self.sp_data = pd.read_csv('./data/constituents.csv') # use db values instead?
-		self.db = MyDB()
 		json_data=open('./config.json')
 		config = json.load(json_data)['config']
 		json_data.close()
@@ -48,7 +47,6 @@ class SeedTweets(object):
 		return rate_limits['reset'], rate_limits['limit'], rate_limits['remaining']
 
 	def grab_tweets(self, ticker, twitter_rates):
-		# return self.twitter_client.search.tweets(q='$' + ticker)
 		try:
 			next_reset, max_per_reset, remaining = twitter_rates
 		except:
@@ -102,7 +100,6 @@ class SeedTweets(object):
 ############################
 # PRICES
 ############################
-class SeedPrices(object):
+class SeedPrices(Seeder):
 	""" Populates Prices Table -- Should be Run Daily """
 	pass
-	# def __init__(self):
