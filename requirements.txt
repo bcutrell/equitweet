@@ -1,0 +1,5 @@
+pandas
+psycopg2
+textblob
+twitter
+oauth
