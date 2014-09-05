@@ -1,11 +1,9 @@
-import code #code.interact(local=locals())
+# import code #code.interact(local=locals())
 from postgres_db import MyDB
 from textblob import TextBlob
 from twitter import *
 import pandas as pd # use pandas ystock connect if broken use ystockquote
-import oauth
-import json
-import time, sys
+import time, sys, oauth, json
 
 class Seeder(object):
 	def __init__(self):
