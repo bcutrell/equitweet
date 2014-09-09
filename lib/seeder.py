@@ -1,7 +1,9 @@
 import code #code.interact(local=locals())
 from postgres_db import MyDB
 from textblob import TextBlob
-from twitter import Twitter
+from twitter import Twitter, OAuth
+## TODO: remove pandas from this file
+import pandas as pd
 import oauth
 import json
 import time, sys
@@ -13,7 +15,6 @@ class SeedStocks(object):
     """
     For the time being this should only be run once
     """
-
 
     def __init__(self, db_config):
         self.db = MyDB(**db_config)
@@ -34,7 +35,6 @@ class SeedStocks(object):
                 # duplicates found for the primary key
                 print e
 
-
 ############################
 # TWEETS
 ############################
@@ -43,10 +43,9 @@ class SeedTweets(object):
     Populates Tweets Table -- Should be Run Daily
     """
 
-
-    def __init__(self):
+    def __init__(self, db_config):
         self.sp_data = pd.read_csv('./data/constituents.csv') # use db values instead?
-        self.db = MyDB()
+        self.db = MyDB(**db_config)
         with open('./config.json', 'r') as f:
             config = json.load(f)['config']
 
@@ -61,7 +60,6 @@ class SeedTweets(object):
         return rate_limits['reset'], rate_limits['limit'], rate_limits['remaining']
 
     def grab_tweets(self, ticker, twitter_rates):
-        # return self.twitter_client.search.tweets(q='$' + ticker)
         try:
             next_reset, max_per_reset, remaining = twitter_rates
         except:

@@ -1,4 +1,5 @@
 /config.json
 database.json
 *.pyc
+lib/*.pyc
 .DS_STORE

@@ -11,7 +11,7 @@ def main(args, db_config):
     if cmd == 'seed_stocks':
         SeedStocks(db_config).run()
     elif cmd == 'tweetalyze':
-        SeedTweets().run()
+        SeedTweets(db_config).run()
     elif cmd == 'seed_prices':
         pass
 

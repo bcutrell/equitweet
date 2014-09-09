@@ -1,8 +1,6 @@
-import psycopg2
-
+import psycopg2, json
 
 class MyDB(object):
-
 
     def __init__(self, **kwargs):
         self._db_connection = psycopg2.connect(**kwargs)
