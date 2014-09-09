@@ -1,3 +1,6 @@
+## For now this should just hold example
+## pandas method
+
 import code #code.interact(local=locals())
 from lib.twitter_man import tman
 from lib.postgres_db import MyDB

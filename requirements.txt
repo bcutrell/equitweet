@@ -1,5 +1,5 @@
-pandas
 psycopg2
 textblob
+pandas
 twitter
 oauth
