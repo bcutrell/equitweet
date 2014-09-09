@@ -1,4 +1,4 @@
-import psycopg2
+import psycopg2, json
 
 class MyDB(object):
 
@@ -6,8 +6,15 @@ class MyDB(object):
  	_db_cur = None
 
 	def __init__(self):
-		## add dbname and user to config
-		self._db_connection = psycopg2.connect("dbname='demodb' user='bcutrell'")
+		json_data=open('./config.json')
+		config = json.load(json_data)['config']
+		json_data.close()
+
+		self._db_connection = psycopg2.connect(
+			# host=config["db"]["aws"]["host"],
+			# password=config["db"]["aws"]["password"],
+			database=config["db"]["local"]["database"],
+			user=config["db"]["local"]["user"])
 		self._db_cur = self._db_connection.cursor()
 
 	def query(self, query, params):
@@ -20,5 +27,6 @@ class MyDB(object):
 		self._db_connection.commit()
 
 	def __del__(self):
-  		self._db_connection.close()
-  		self._db_cur.close()
+		self._db_cur.close()
+		self._db_connection.close()
+  		
