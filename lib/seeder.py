@@ -19,21 +19,34 @@ class SeedStocks(object):
     def __init__(self, db_config):
         self.db = MyDB(**db_config)
 
-    def run(self):
-        with open('data/constituents.csv', 'r') as f:
-            #TODO: This should be an update of the table, not a try/except
-            try:
-                self.db.copy_expert('''
-                    COPY stocks
-                    FROM STDIN
-                    DELIMITER ','
-                    CSV HEADER
-                ''', f)
+    def _create_temp_table(self, table_name):
+        self.db.query('''
+            CREATE TEMPORARY TABLE {0}
+                (LIKE stocks INCLUDING INDEXES)
+        '''.format(table_name))
 
-                self.db.commit()
-            except Exception as e:
-                # duplicates found for the primary key
-                print e
+    def run(self):
+        tmp_table_name = 'tmp_stocks'
+        self._create_temp_table(tmp_table_name)
+
+        with open('data/constituents.csv', 'r') as f:
+            self.db.copy_expert('''
+                COPY {0}
+                FROM STDIN
+                DELIMITER ','
+                CSV HEADER
+            '''.format(tmp_table_name), f)
+
+            # Only insert values into stocks that don't already exist
+            self.db.query('''
+                INSERT INTO stocks
+                SELECT {0}.* FROM {0}
+                LEFT JOIN stocks
+                    ON stocks.ticker = {0}.ticker
+                WHERE stocks.ticker IS NULL
+            '''.format(tmp_table_name))
+
+            self.db.commit()
 
 ############################
 # TWEETS
