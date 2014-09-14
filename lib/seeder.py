@@ -1,64 +1,64 @@
-import code #code.interact(local=locals())
 from postgres_db import MyDB
 from textblob import TextBlob
 from twitter import Twitter, OAuth
-## TODO: remove pandas from this file
-import pandas as pd
-import oauth
-import json
-import time, sys
 
-############################
-# STOCKS
-############################
-class SeedStocks(object):
-    """
-    For the time being this should only be run once
-    """
+import json
+import re
+
+
+class Seeder(object):
+
 
     def __init__(self, db_config):
         self.db = MyDB(**db_config)
 
-    def _create_temp_table(self, table_name):
-        self.db.query('''
-            CREATE TEMPORARY TABLE {0}
-                (LIKE stocks INCLUDING INDEXES)
+    def _create_staging_table(self, table_name):
+        self.db.execute('''
+            CREATE TEMPORARY TABLE tmp_{0}
+                (LIKE {0} INCLUDING INDEXES)
         '''.format(table_name))
 
+
+############################
+# STOCKS
+############################
+class SeedStocks(Seeder):
+    """
+    For the time being this should only be run once
+    """
+
     def run(self):
-        tmp_table_name = 'tmp_stocks'
-        self._create_temp_table(tmp_table_name)
+        self._create_staging_table('stocks')
 
         with open('data/constituents.csv', 'r') as f:
             self.db.copy_expert('''
-                COPY {0}
+                COPY tmp_stocks
                 FROM STDIN
                 DELIMITER ','
                 CSV HEADER
-            '''.format(tmp_table_name), f)
+            ''', f)
 
             # Only insert values into stocks that don't already exist
-            self.db.query('''
+            self.db.execute('''
                 INSERT INTO stocks
-                SELECT {0}.* FROM {0}
+                SELECT tmp_stocks.* FROM tmp_stocks
                 LEFT JOIN stocks
-                    ON stocks.ticker = {0}.ticker
+                    ON stocks.ticker = tmp_stocks.ticker
                 WHERE stocks.ticker IS NULL
-            '''.format(tmp_table_name))
+            ''')
 
-            self.db.commit()
 
 ############################
 # TWEETS
 ############################
-class SeedTweets(object):
+class SeedTweets(Seeder):
     """
     Populates Tweets Table -- Should be Run Daily
     """
 
     def __init__(self, db_config):
-        self.sp_data = pd.read_csv('./data/constituents.csv') # use db values instead?
-        self.db = MyDB(**db_config)
+        super(SeedTweets, self).__init__(db_config)
+
         with open('./config.json', 'r') as f:
             config = json.load(f)['config']
 
@@ -68,66 +68,138 @@ class SeedTweets(object):
             config['consumer_key'],
             config['consumer_secret']))
 
-    def get_twitter_rates(self):
+    def _generate_query_groups(self):
+        self.db.execute('SELECT ticker FROM stocks')
+        sp_data = [row[0] for row in self.db.fetchall()]
+
+        # Break into groups of 30 to keep query string below 500 chars
+        groups = [{'tickers': sp_data[i:i+30]} for i in xrange(0, len(sp_data), 30)]
+
+        for group in groups:
+            group['query_string'] = ' OR '.join('$' + ticker for ticker in group['tickers'])
+            group['in_clause'] = "'{0}'".format("','".join(group['tickers']))
+
+        return groups
+
+    def _get_twitter_rates(self):
         rate_limits = self.twitter_client.application.rate_limit_status(resources="search")['resources']['search']['/search/tweets']
         return rate_limits['reset'], rate_limits['limit'], rate_limits['remaining']
 
-    def grab_tweets(self, ticker, twitter_rates):
-        try:
-            next_reset, max_per_reset, remaining = twitter_rates
-        except:
-            print "ERROR:" + "Connecting to Twitter API via OAuth2 sign, could not get rate limits"
-            sys.exit(1)
-        while True:
-            if time.time() > next_reset:
-                try:
-                    next_reset, _, remaining = self.get_twitter_rates()
-                except:
-                    next_reset += 15*60
-                    remaining = max_per_reset
+    def _make_search_request(self, query_string, max_id=None, since_id=None):
+        query_args = {
+            'q': query_string,
+            'include_entities': False,
+            'count': 100,
+            'lang': 'en'
+        }
 
-                if not remaining:
-                    # log("WARNING", "Stalling search queries with rate exceeded for the next %s seconds" % max(0, int(next_reset - time.time())))
-                    time.sleep(1 + max(0, next_reset - time.time()))
-                    continue
+        if max_id:
+            query_args['max_id'] = max_id
+        if since_id:
+            query_args['since_id'] = since_id
 
-                while remaining:
-                    try:
-                        return self.twitter_client.search.tweets(q='$' + ticker)
-                    except:
-                        # log("WARNING", "Search connection could not be established, retrying in 2 secs (%s: %s)" % (type(e), e))
-                        time.sleep(2)
-                        continue
+        return self.twitter_client.search.tweets(**query_args)
 
-    def seed_tweet(self, ticker, tweet):
-        self.db.query('''
-            INSERT INTO tweets (ticker, username, tweet_id, followers_count,
-                polarity, subjectivity, date)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        ''', (  ticker,
-                tweet['user']['name'],
-                tweet['id'],
-                tweet['user']['followers_count'],
-                TextBlob(tweet['text']).sentiment.polarity,
-                TextBlob(tweet['text']).sentiment.subjectivity,
-                tweet['created_at'] ))
+    def _insert_tweets(self, values):
+        if values:
+            values_string = ','.join(values)
+            self._create_staging_table('tweets')
+            self.db.execute('''
+                INSERT INTO tmp_tweets
+                    (ticker, username, tweet_id, followers_count, polarity, subjectivity, date)
+                VALUES
+                    {0}
+                '''.format(values_string))
+
+            self.db.execute('''
+                INSERT INTO tweets
+                SELECT tmp_tweets.* FROM tmp_tweets
+                LEFT JOIN tweets
+                    ON tweets.ticker = tmp_tweets.ticker
+                    AND tweets.tweet_id = tmp_tweets.tweet_id
+                WHERE tweets.ticker IS NULL
+            ''')
+
+            self.db.execute('DROP TABLE tmp_tweets')
+
+    def _collect_search_results(self, query_group, remaining):
+        tickers = query_group['tickers']
+        query_string = query_group['query_string']
+        in_clause = query_group['in_clause']
+
+        # Start where we left off
+        self.db.execute('''
+            SELECT MAX(tweet_id)
+            FROM tweets
+            WHERE ticker IN ({0})
+        '''.format(in_clause))
+        r = self.db.fetchone()
+
+        since_id = r[0] if r else None
+        max_id = None
+
+        while remaining > 0:
+            results = self._make_search_request(query_string, max_id=max_id, since_id=since_id)
+            remaining -= 1
+            since_id = None
+            print 'remaining: {0}'.format(remaining)
+
+            values = []
+            for tweet in results['statuses']:
+                text = tweet['text']
+                text_blob = TextBlob(text)
+                username = tweet['user']['name']
+                tweet_id = tweet['id']
+                followers = tweet['user']['followers_count']
+                polarity = text_blob.sentiment.polarity
+                subjectivity = text_blob.sentiment.subjectivity
+                created_date = tweet['created_at']
+
+                # Find all tickers mentioned by this tweet and add them to
+                # the list of values to insert
+                for ticker in tickers:
+                    if re.search('\${0}[^A-Z]'.format(ticker), text):
+                        subbed_values = self.db.mogrify(
+                            '(%s, %s, %s, %s, %s, %s, %s)',
+                            (
+                                ticker,
+                                username,
+                                tweet_id,
+                                followers,
+                                polarity,
+                                subjectivity,
+                                created_date
+                            )
+                        )
+
+                        values.append(subbed_values)
+
+            self._insert_tweets(values)
+
+            if results['search_metadata'].get('next_results'):
+                max_id = results['search_metadata']['next_results'].split('&')[0].lstrip('?max_id=')
+            else:
+                max_id = results['search_metadata']['max_id']
+                break
+
+        return remaining
 
     def run(self):
-        twitter_rates = self.get_twitter_rates()
-        for index, row in self.sp_data.iterrows():
-            ticker = row['Ticker']
-            tweets = self.grab_tweets(ticker, twitter_rates)
+        next_reset, max_per_reset, remaining = self._get_twitter_rates()
+        query_groups = self._generate_query_groups()
 
-            for tweet in tweets.values()[1]:
-                self.db.query("SELECT * FROM tweets WHERE tweet_id = %s", (tweet['id'],))
-                if self.db.fetchone() == None:
-                    self.seed_tweet(ticker, tweet)
-                    self.db.commit()
+        for group in query_groups:
+            if remaining < 1:
+                print "Over the limit"
+                return
+
+            remaining = self._collect_search_results(group, remaining)
+
 
 ############################
 # PRICES
 ############################
-class SeedPrices(object):
+class SeedPrices(Seeder):
     """
     Populates Prices Table -- Should be Run Daily
     """
