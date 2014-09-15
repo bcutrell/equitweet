@@ -2,15 +2,17 @@ import psycopg2, json
 
 class MyDB(object):
 
-    def __init__(self, **kwargs):
+    def __init__(self, autocommit=True, **kwargs):
         self._db_connection = psycopg2.connect(**kwargs)
         self._db_cur = self._db_connection.cursor()
 
-        if kwargs.get('autocommit'):
-            self.autocommit = True
+        self.autocommit = autocommit
 
-    def query(self, *args):
+    def execute(self, *args):
         return self._db_cur.execute(*args)
+
+    def mogrify(self, *args):
+        return self._db_cur.mogrify(*args)
 
     def fetchone(self):
         return self._db_cur.fetchone()
