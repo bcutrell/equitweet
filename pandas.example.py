@@ -3,7 +3,7 @@ from lib.panda_bro import PandaBro
 
 panda_bro = PandaBro()
 
-print panda_bro.get_mean_polarity()
+panda_bro.get_mean_polarity()
 
 print '********************************************'
 
@@ -13,4 +13,4 @@ print '********************************************'
 
 panda_bro.overall_sentiment()
 
-print panda_bro.tweets_df
+print panda_bro.overall_sentiment_vs_sp500()
