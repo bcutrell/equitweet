@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS tweets (
   UNIQUE (tweet_id, ticker)
 );
 
+-- we do want the full text for learning algos
+ALTER TABLE tweets ADD COLUMN full_text VARCHAR(140);
+
 CREATE TABLE IF NOT EXISTS prices (
   ticker VARCHAR(8) REFERENCES stocks(ticker),
   start_price REAL,

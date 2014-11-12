@@ -160,7 +160,7 @@ class SeedTweets(Seeder):
                 for ticker in tickers:
                     if re.search('\${0}[^A-Z]'.format(ticker), text):
                         subbed_values = self.db.mogrify(
-                            '(%s, %s, %s, %s, %s, %s, %s)',
+                            '(%s, %s, %s, %s, %s, %s, %s, %s)',
                             (
                                 ticker,
                                 username,
@@ -168,7 +168,8 @@ class SeedTweets(Seeder):
                                 followers,
                                 polarity,
                                 subjectivity,
-                                created_date
+                                created_date,
+                                text
                             )
                         )
 
