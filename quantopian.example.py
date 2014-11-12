@@ -1,25 +1,26 @@
 '''
-Quantopian Gamplan:
-	Use the trading algo simulator here: https://www.quantopian.com/
-	This website lets you upload custom csv data via fetch_csv()
+  Quantopian Gamplan:
+  Use the trading algo simulator here: https://www.quantopian.com/
+  This website lets you upload custom csv data via fetch_csv()
 
-	The simulator can also be run on the CL using zipline but this involves
-	more specifications. I have also been unable to even find the fetch_csv() method
-	in the repo: https://github.com/quantopian/zipline
+  The simulator can also be run on the CL using zipline but this involves
+  more specifications. I have also been unable to even find the fetch_csv() method
+  in the repo: https://github.com/quantopian/zipline
 
-	PandaBro can be used to generate 3 csvs, Market, Sector, and Ticker.
-	These can be stored as temporary gists and pulled in the quantopian
-	backtesting app. This will give us more accurate backtests and allow for
-	potential live trading platforms (I believe thats still a work in progress
-	on their end)
+  PandaBro can be used to generate 3 csvs, Market, Sector, and Ticker.
+  These can be stored as temporary gists and pulled in the quantopian
+  backtesting app. This will give us more accurate backtests and allow for
+  potential live trading platforms (I believe thats still a work in progress
+  on their end)
 
-	Below is an example from one of the quantopian founders -- it trades based
-	off of the google search term 'debt', it is a similar example that can help
-	get the wheels in motion
+  Below is an example from one of the quantopian founders -- it trades based
+  off of the google search term 'debt', it is a similar example that can help
+  get the wheels in motion
 '''
 
 import code # code.interact(local=locals())
 import zipline as zp
+import pandas as pd
 from lib.panda_bro import PandaBroMarket, PandaBroSector, PandaBroTicker
 
 pbro_market = PandaBroMarket()
@@ -27,8 +28,10 @@ pbro_sector = PandaBroSector()
 pbro_ticker = PandaBroTicker()
 
 ## Graph MVA strategy vs. SP500
+pbro_market.run_backtest().to_csv('backtest_csv.csv')
 # pbro_market.graph_backtest()
 
+'''
 import numpy as np
 import datetime
 # Average over X weeks
@@ -82,3 +85,4 @@ def mean_past_queries(data, query):
     # Compute mean over all events except most current one.
     return data[query][query][:-1].mean()
 
+'''
