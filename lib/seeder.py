@@ -106,7 +106,7 @@ class SeedTweets(Seeder):
             self._create_staging_table('tweets')
             self.db.execute('''
                 INSERT INTO tmp_tweets
-                    (ticker, username, tweet_id, followers_count, polarity, subjectivity, date)
+                    (ticker, username, tweet_id, followers_count, polarity, subjectivity, date, full_text)
                 VALUES
                     {0}
                 '''.format(values_string))
@@ -169,7 +169,7 @@ class SeedTweets(Seeder):
                                 polarity,
                                 subjectivity,
                                 created_date,
-                                text
+                                text[0:140]
                             )
                         )
 
