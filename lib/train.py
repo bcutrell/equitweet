@@ -1,24 +1,10 @@
-import pandas.io.data as web
-import datetime
+import code # code.interact(local=locals())
+import numpy as np
+import pandas as pd
 
-filepath = 'data/constituents.csv'
-stocks_df = pd.read_csv(filepath)
-
-stocks_df['sector'] = stocks_df['sector'].map(lambda x: x.strip())
-stocks_df.replace('Industries', 'Industrials')
-
-filepath = 'data/train.csv'
-tweets_df = pd.read_csv(filepath)
-
-start = datetime.datetime(2014, 8, 1)
-end = datetime.datetime(2014, 8, 27)
-
-df.min
-df.max
-
-f=web.DataReader('XLY', 'yahoo', start, end)
-
-f.ix['2010-01-04']
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn import linear_model
+from scipy.sparse import hstack
 
 '''
 Consumer Discretionary (XLY)
@@ -31,46 +17,38 @@ Materials (XLB)
 Technology (XLK)
 Utilities (XLU)
 '''
-pprint(ystockquote.get_all('XLU'))
 
-def date_range(self):
-  date_df = self.tweets_summary['date'].drop_duplicates()
-  start = date_df.min()
-  end = date_df.max()
-  return [start, end]
+def load_data(filepath):
+	return pd.read_csv(filepath)
 
-# technial indicators
-# https://github.com/mrjbq7/ta-lib
+filepath = '/Users/bcutrell/python/equitweet/data/train.csv'
+df = load_data(filepath) # need historical prices
+df = df.dropna()
 
-# import ystockquote
-#	from pprint import pprint
-# pprint(ystockquote.get_all('GOOG'))
-# {'avg_daily_volume': '2178170',
+# get dummy variables for each sector
+sector_names = df['sector'].unique()
+df = df.join(pd.get_dummies(df['sector'])) # df = df.drop('sector', 1)
 
-# pprint(ystockquote.get_historical_prices('GOOG', '2013-01-03', '2013-01-08'))
+code.interact(local=locals())
 
-# sector price t+1
-# tech feature
-# fund feature
+# merge all the text for each sector?
+vect_two = vect_one =
+	TfidfVectorizer(min_df=1,ngram_range=(1,3),max_features=200) # 24000000
 
-# pprint(ystockquote.get_all('XLU'))
-# {'avg_daily_volume': '12103100',
-#  'book_value': '0.00',
-#  'change': '-0.17',
-#  'dividend_per_share': '1.49',
-#  'dividend_yield': '3.21',
-#  'earnings_per_share': '0.00',
-#  'ebitda': '0',
-#  'fifty_day_moving_avg': '43.63',
-#  'fifty_two_week_high': '46.61',
-#  'fifty_two_week_low': '37.11',
-#  'market_cap': 'N/A',
-#  'price': '46.31',
-#  'price_book_ratio': 'N/A',
-#  'price_earnings_growth_ratio': 'N/A',
-#  'price_earnings_ratio': 'N/A',
-#  'price_sales_ratio': 'N/A',
-#  'short_ratio': 'N/A',
-#  'stock_exchange': '"PCX"',
-#  'two_hundred_day_moving_avg': '42.845',
-#  'volume': '5562956'}
+tweets = df['full_text']
+sectors = df['sector']
+
+# features add sector name to each tweet?
+tweets_vect = vect_one.fit_transform(tweets)
+sectors_vect = vect_two.fit_transform(sectors) # add as binary 
+
+# b.reshape(5, 1)
+# merge and add to regression
+merged = hstack((tweets_vect,sectors_vect))
+rr = linear_model.Ridge(alpha=0.035)
+
+sector_prices = df['sector_adj_close']
+sector_prices = sector_prices.reshape(sector_prices.shape[0], 1)
+
+# rr.fit(merged,sector_prices)
+# rr.fit(tweets_vect.toarray(),sector_prices)
