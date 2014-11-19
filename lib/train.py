@@ -21,7 +21,7 @@ Utilities (XLU)
 def load_data(filepath):
 	return pd.read_csv(filepath)
 
-filepath = '/Users/bcutrell/python/equitweet/data/train.csv'
+filepath = '/Users/bcutrell/python/equitweet/data/full_train.csv'
 df = load_data(filepath) # need historical prices
 df = df.dropna()
 

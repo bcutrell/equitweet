@@ -98,13 +98,13 @@ class SetupTrain(Cleaner):
         text_df = text_df.drop('Unnamed: 0', 1)
         # text_df.to_csv('data/train.csv', index=False)
 
-    def prices_for(ticker, start, end):
+    def prices_for(self, ticker, start, end):
         try:
-            prices = web.DataReader(sector_etf, 'yahoo', start, end)
+            prices = web.DataReader(ticker, 'yahoo', start, end)
         except IOError:
             print 'missing ' + ticker
             print IOError
-            prices = 0
+            prices = False
         return prices
 
     def get_price_history_for(self, tickers, start, end, sector=False):
@@ -114,7 +114,7 @@ class SetupTrain(Cleaner):
                 sector_etf = self.sector_security_map(ticker)
                 prices = self.prices_for(sector_etf, start, end)
             else:
-                prices = self.prices_for(sector_etf, start, end)
+                prices = self.prices_for(ticker, start, end)
 
             price_history[ticker] = prices
         return price_history
@@ -136,9 +136,9 @@ class SetupTrain(Cleaner):
         start, end = self.date_range(tweets_df) # get dates
 
         # sector_list = self.get_unique_list_for('sector', tweets_df)
-        securities_list = self.get_unique_list_for('ticker', tweets_df)
-
         # sector_price_history = self.get_price_history_for(sector_list, start, end, True)
+        
+        securities_list = self.get_unique_list_for('ticker', tweets_df)
         security_price_history = self.get_price_history_for(securities_list, start, end)
         
         tweets_df['sector_adj_close'] = tweets_df['security_adj_close'] = \
@@ -147,8 +147,12 @@ class SetupTrain(Cleaner):
         tweets_df = tweets_df[tweets_df.sector.notnull()]
         for index, row in tweets_df.iterrows(): # horrible... but easy to read
             # price_df = sector_price_history[self.sector_security_map(row['sector'])]
-            price_df = security_price_history[self.sector_security_map(row['ticker'])]
-            price_df_t1 = price_df.shift(-1)
+            price_df = security_price_history[row['ticker']]
+
+            try:
+                price_df_t1 = price_df.shift(-1)
+            except:
+                continue
 
             count = 0
             date = datetime.datetime.strptime(row['date'], '%Y-%m-%d')
@@ -157,22 +161,22 @@ class SetupTrain(Cleaner):
                     d = date + datetime.timedelta(days=count)
                     # sector_price = price_df_t1.ix[d]['Adj Close']
                     # sector_price = price_df_t1.ix[row['date']]['Adj Close']
+                    # tweets_df.loc[row.name, 'sector_adj_close'] = sector_price
 
-                    security_price = price_df_t1.ix[row['date']]['Adj Close']
-                    security_volume = price_df_t1.ix[row['date']]['Volume']
+                    security_price = price_df_t1.ix[d]['Adj Close']
+                    security_volume = price_df_t1.ix[d]['Volume']
 
-                    tweets_df.loc[row.name, 'sector_adj_close'] = sector_price
+                    tweets_df.loc[row.name, 'security_adj_close'] = security_price
+                    tweets_df.loc[row.name, 'security_volume'] = security_volume
                     break
                 except:
                     count += 1
 
-        code.interact(local=locals())
         # tweets_df.to_csv('data/train_new.csv', index=False)
 
     def setup_train_seed_security_prices(self):
         pass
 
 
-
-filepath = 'data/train.csv'
-SetupTrain(filepath).setup_train_seed_prices()
+# filepath = 'data/train.csv'
+# SetupTrain(filepath).setup_train_seed_prices()
