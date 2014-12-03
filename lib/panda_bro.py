@@ -1,3 +1,5 @@
+# %run '/Users/bcutrell/python/equitweet/lib/panda_bro.py'
+
 import code # code.interact(local=locals())
 from postgres_db import MyDB
 
@@ -12,7 +14,7 @@ import json
 
 class PandaBro(object):
   def __init__(self):
-    with open('./aws_database.json', 'r') as f:
+    with open('./database.json', 'r') as f:
       db_config = json.load(f)
 
     self.db = MyDB(**db_config)
@@ -136,3 +138,8 @@ class PandaBroMarket(PandaBro):
     df = self.run_backtest()
     plt.figure(); df[['equitweet_value','sp500_value']].ffill().plot()
     plt.show()
+
+pbro_market = PandaBroMarket()
+
+## Graph MVA strategy vs. SP500
+pbro_market.graph_backtest()

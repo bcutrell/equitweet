@@ -5,10 +5,37 @@ import numpy as np
 import json
 from twitter import Twitter, OAuth
 import datetime
+import csv
+
+import re
+from nltk.corpus import stopwords
 
 class Cleaner(object):
     def __init__(self, filepath):
         self.df = pd.read_csv(filepath, error_bad_lines=False)
+        self.filepath = filepath
+
+    def merge_cs_usernames(self):
+        with open(filepath, "rb") as infile, open("clean_output.csv", "wb") as outfile:
+            reader = csv.reader(infile)
+            writer = csv.writer(outfile)
+            for line in reader:
+                if len(line) < 8:
+                    continue
+                if line[1] == 'username':
+                    writer.writerow(line)
+                    continue
+                if len(line) > 8:
+                    n = 2
+                    finished = False
+                    while not finished:
+                        if not any(i.isdigit() for i in line[n]):
+                            line[1] = line[1] + line[n]
+                            line.pop(n)
+                            n += 1
+                        else:
+                            finished = True
+                writer.writerow(line)
 
 class BackFillText(Cleaner):
     def run(self):
@@ -50,7 +77,6 @@ class BackFillText(Cleaner):
                         else:
                             continue
                     except:
-                        code.interact(local=locals())
                         continue
 
             else:
@@ -82,8 +108,8 @@ class SetupTrain(Cleaner):
         '''
         cleanup backfill data for training set
         '''
-        df = self.df
-        text_df = df[df['full_text'].notnull()]
+        text_df = self.df
+        # text_df = df[df['full_text'].notnull()]
 
         filepath = 'data/constituents.csv'
         stocks_df = pd.read_csv(filepath)
@@ -96,7 +122,7 @@ class SetupTrain(Cleaner):
             text_df.loc[text_df['ticker'] == ticker, 'sector'] = sector
 
         text_df = text_df.drop('Unnamed: 0', 1)
-        # text_df.to_csv('data/train.csv', index=False)
+        text_df.to_csv('data/train200k.csv', index=False)
 
     def prices_for(self, ticker, start, end):
         try:
@@ -128,26 +154,28 @@ class SetupTrain(Cleaner):
     def get_unique_list_for(self, column, df):
         return df[column].drop_duplicates().dropna().tolist()
 
-    def setup_train_seed_prices(self):
+    def setup_train_seed_prices(self, sector_prices=False, security_prices=True):
         '''
         Add prices
         '''
         tweets_df = self.df
         start, end = self.date_range(tweets_df) # get dates
 
-        # sector_list = self.get_unique_list_for('sector', tweets_df)
-        # sector_price_history = self.get_price_history_for(sector_list, start, end, True)
-        
-        securities_list = self.get_unique_list_for('ticker', tweets_df)
-        security_price_history = self.get_price_history_for(securities_list, start, end)
-        
-        tweets_df['sector_adj_close'] = tweets_df['security_adj_close'] = \
-        tweets_df['security_volume'] = np.nan
+        if sector_prices:
+            sector_list = self.get_unique_list_for('sector', tweets_df)
+            sector_price_history = self.get_price_history_for(sector_list, start, end, True)
+            tweets_df['sector_adj_close'] = np.nan
+        elif security_prices:
+            securities_list = self.get_unique_list_for('ticker', tweets_df)
+            security_price_history = self.get_price_history_for(securities_list, start, end)
+            tweets_df['security_adj_close'] = tweets_df['security_volume'] = np.nan
 
         tweets_df = tweets_df[tweets_df.sector.notnull()]
         for index, row in tweets_df.iterrows(): # horrible... but easy to read
-            # price_df = sector_price_history[self.sector_security_map(row['sector'])]
-            price_df = security_price_history[row['ticker']]
+            if sector_prices:
+                price_df = sector_price_history[row['sector']]
+            elif security_prices:
+                price_df = security_price_history[row['ticker']]
 
             try:
                 price_df_t1 = price_df.shift(-1)
@@ -159,24 +187,46 @@ class SetupTrain(Cleaner):
             while count < 5:
                 try:
                     d = date + datetime.timedelta(days=count)
-                    # sector_price = price_df_t1.ix[d]['Adj Close']
-                    # sector_price = price_df_t1.ix[row['date']]['Adj Close']
-                    # tweets_df.loc[row.name, 'sector_adj_close'] = sector_price
-
-                    security_price = price_df_t1.ix[d]['Adj Close']
-                    security_volume = price_df_t1.ix[d]['Volume']
-
-                    tweets_df.loc[row.name, 'security_adj_close'] = security_price
-                    tweets_df.loc[row.name, 'security_volume'] = security_volume
+                    if sector_prices:
+                        sector_price = price_df_t1.ix[d]['Adj Close']
+                        sector_price = price_df_t1.ix[row['date']]['Adj Close']
+                        tweets_df.loc[row.name, 'sector_adj_close'] = sector_price
+                    elif security_prices:
+                        security_price = price_df.ix[d]['Adj Close']
+                        security_volume = price_df.ix[d]['Volume']
+                        tweets_df.loc[row.name, 'security_adj_close'] = security_price
+                        tweets_df.loc[row.name, 'security_volume'] = security_volume
                     break
                 except:
                     count += 1
 
-        # tweets_df.to_csv('data/train_new.csv', index=False)
+        # tweets_df.to_csv('data/train200k_prices.csv', index=False)
 
     def setup_train_seed_security_prices(self):
         pass
 
+    def setup_train_text(self, df):
+        df['full_text'] = df['full_text'].apply(self.clean_string)
+
+    def clean_string(self, text):
+        text = scentence.lower()
+        text = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', text)
+        words = re.findall(r'\w+', text,flags = re.UNICODE | re.LOCALE) 
+        words = [x for x in words if not (x.isdigit() or x[0] == '-' and x[1:].isdigit())]
+        important_words=[]
+        for word in words:
+          if word not in stopwords.words('english'):
+            important_words.append(word)
+            important_words = filter(lambda x: x not in stopwords.words('english'), words)
+        return ' '.join(important_words)
 
 # filepath = 'data/train.csv'
-# SetupTrain(filepath).setup_train_seed_prices()
+# full_filepath = '/Users/bcutrell/python/equitweet/data/tweets.csv'
+# full_filepath = '/Users/bcutrell/python/equitweet/quoted.csv'
+# full_filepath = '/Users/bcutrell/python/equitweet/data/train200k.csv'
+filepath = '/Users/bcutrell/python/equitweet/data/train200k_new.csv'
+filepath1 = '/Users/bcutrell/python/equitweet/data/train200k_prices.csv'
+SetupTrain(filepath).setup_train_seed_prices(security_prices=True)
+# setup_train_seed_sectors()
+# setup_train_seed_prices()
+
