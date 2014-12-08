@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import linear_model
 from scipy.sparse import hstack
 
@@ -45,6 +44,15 @@ def load_clean_data(filepath, get_normalized_followers=False, get_sector_dummies
     df = df.join(pd.get_dummies(df['sector']))
   return df
 
+def clean_data(df, get_normalized_followers=False, get_sector_dummies=False):
+  df = df.drop('full_text', 1) # currently do not use text
+  df = df.dropna()
+  if get_normalized_followers:
+    df = normalize_followers(df)
+  if get_sector_dummies:
+    df = df.join(pd.get_dummies(df['sector']))
+  return df
+
 def normalize_followers(df):
   max_followers = df['followers_count'].max()
   df['weighted_followers'] = df['followers_count'] / max_followers
@@ -57,34 +65,15 @@ def gen_matrix_for(series):
 def gen_features():
   return np.hstack([df[sector_names].as_matrix(),
     gen_matrix_for(df['weighted_polarity']),
-    gen_matrix_for(df['security_adj_close'])])
-    # group followers by day 0-1000, 1000-10000, 10000-10000, 100000
-    # gen_matrix_for(df['weighted_followers']),
-    # gen_matrix_for(df['security_volume']),  
-    # gen_matrix_for(df['polarity']),
-    # gen_matrix_for(df['followers_count'])])
+    gen_matrix_for(df['weighted_followers'])
+    ])
 
-def feature_list():
-  return gen_features()
-  sectors, weighted_followers, polarity, security_close 
-  security_volume, followers
-
-def get_daily_sector_followers():
-  df['daily_sector_followers'] = np.nan
-  d = df.groupby('date').aggregate(lambda x: sum(x['followers_count']))
-
-  for date in d.index.tolist():
-    df.loc[date, 'daily_sector_followers'] = d[date]
-
-def graphing():
-  df['sector_adj_close'][df['Financials'] == 1].plot()
-  df['predictions'][df['Financials'] == 1].plot()
-  df['sector_adj_close'][df['Financials'] == 1]
-  df['predictions'][df['Financials'] == 1]
-  df[['predictions', 'sector_adj_close']][df['Financials'] == 1]
-  df.groupby('date')['predictions'][df['Financials'] == 1].mean()
-  df['predictions'][df['Financials'] == 1].max()
-  df.plot(subplots=True, figsize=(6, 6));
+# group followers by day 0-1000, 1000-10000, 10000-10000, 100000
+# gen_matrix_for(df['weighted_followers']),
+# gen_matrix_for(df['security_volume']),  
+# gen_matrix_for(df['security_adj_close'])
+# gen_matrix_for(df['polarity']),
+# gen_matrix_for(df['followers_count'])])
 
 def gen_predictions():
   rr = linear_model.Ridge()
@@ -103,13 +92,13 @@ def validator():
 
   scoring = make_scorer(mean_squared_error, greater_is_better=False)
   cv = KFold(Xtrain.shape[0], 10)
-  model = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0], cv=cv, scoring=scoring)
+  model = linear_model.RidgeCV(alphas=[0.5, 1.0, 1.5], cv=cv, scoring=scoring)
   model.fit(Xtrain,Ytrain)
   print model.coef_
   print model.alpha_
   print model.score(Xtest,Ytest)
 
-def sector_tester():
+def eval_sectors(sector):
   for sector in df['sector'].unique():
     print "*" * 10
     print sector
@@ -118,6 +107,8 @@ def sector_tester():
     print df['predictions'][df[sector] == 1].describe()
     print ("-" * 3) + 'Actual' + ("-" * 3)
     print df['sector_adj_close'][df[sector] == 1].describe()
+    df['sector_adj_close'][df[sector] == 1].plot()
+    df['polarity'][df[sector] == 1].plot
 
 np.set_printoptions(formatter={'float_kind':'{:25f}'.format})
 
@@ -131,7 +122,23 @@ sector_prices = np.log(gen_matrix_for(df['sector_adj_close']))
 
 # validations
 Xtrain, Xtest, Ytrain, Ytest = train_test_split(features, sector_prices, test_size=0.33, random_state=42)
-# validator()
+validator()
 
-gen_predictions()
-sector_tester()
+# try with pct change
+def run_pct_chg_graph_for(sector):
+  df_chg = df[df[sector] == 1]
+  df_sac = df_chg.groupby('date').sector_adj_close.mean()
+  df_wp = df_chg.groupby('date').weighted_polarity.mean()
+  df_chg = pd.concat([df_sac, df_wp],axis=1)
+  df_pct_chg = df_chg.pct_change()
+  best way to handle these outliers?
+  df_pct_chg.loc[df_pct_chg["weighted_polarity"] > 5, 'weighted_polarity'] = 0
+  df_pct_chg.plot(subplots=True, figsize=(6, 6));
+
+
+# gen_predictions()
+# eval_sector('Consumer Discretionary', df)
+# mean_squared_error(df['sector_adj_close'], df['predictions'])
+# df['sector_adj_close'][df[sector] == 1].plot()
+# df['polarity'][df[sector] == 1].plot()
+# df['sector_adj_close'][df['Industrials'] == 1].hist()

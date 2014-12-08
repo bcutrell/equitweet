@@ -115,7 +115,7 @@ class PandaBroMarket(PandaBro):
 
   def add_mavg(self):
     df = self.mkt_sentiment_sp500()
-    df['sentiment_mavg'] = pd.rolling_mean(df.mkt_sentiment, 3)
+    df['sentiment_mavg'] = pd.rolling_mean(df.mkt_sentiment, 3) #3
     df.sentiment_mavg.shift(1) # still missing some shifts
     return df
 

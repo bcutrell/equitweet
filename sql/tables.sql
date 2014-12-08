@@ -1,13 +1,13 @@
 CREATE TABLE IF NOT EXISTS stocks (
-  ticker VARCHAR(8) primary key, -- name this stock?
+  ticker VARCHAR(8) primary key,
   name VARCHAR(100),
   sector VARCHAR(100)
 );
 
 CREATE TABLE IF NOT EXISTS tweets (
   ticker   VARCHAR(8) REFERENCES stocks(ticker),
-  username VARCHAR(20), -- increase length
-  tweet_id BIGINT, -- id from twitter
+  username VARCHAR(20),
+  tweet_id BIGINT,
   followers_count INT,
   polarity DOUBLE PRECISION,
   subjectivity DOUBLE PRECISION,
@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS tweets (
   UNIQUE (tweet_id, ticker)
 );
 
--- we do want the full text for learning algos
 ALTER TABLE tweets ADD COLUMN full_text VARCHAR(140);
 
 CREATE TABLE IF NOT EXISTS prices (
@@ -24,5 +23,4 @@ CREATE TABLE IF NOT EXISTS prices (
   end_price REAL,
   adj_close REAL,
   stat_date DATE
-  -- what stock info do we want?
 );
