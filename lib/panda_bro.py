@@ -1,3 +1,5 @@
+# %run '/Users/bcutrell/python/equitweet/lib/panda_bro.py'
+
 import code # code.interact(local=locals())
 from postgres_db import MyDB
 
@@ -113,7 +115,7 @@ class PandaBroMarket(PandaBro):
 
   def add_mavg(self):
     df = self.mkt_sentiment_sp500()
-    df['sentiment_mavg'] = pd.rolling_mean(df.mkt_sentiment, 3)
+    df['sentiment_mavg'] = pd.rolling_mean(df.mkt_sentiment, 3) #3
     df.sentiment_mavg.shift(1) # still missing some shifts
     return df
 
@@ -136,3 +138,8 @@ class PandaBroMarket(PandaBro):
     df = self.run_backtest()
     plt.figure(); df[['equitweet_value','sp500_value']].ffill().plot()
     plt.show()
+
+pbro_market = PandaBroMarket()
+
+## Graph MVA strategy vs. SP500
+pbro_market.graph_backtest()
