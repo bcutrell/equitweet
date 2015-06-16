@@ -122,23 +122,30 @@ sector_prices = np.log(gen_matrix_for(df['sector_adj_close']))
 
 # validations
 Xtrain, Xtest, Ytrain, Ytest = train_test_split(features, sector_prices, test_size=0.33, random_state=42)
+# validator()
+
+
+# code.interact(local=locals())
+
+scolumns = ['sector_adj_close', 'weighted_polarity', 'weighted_followers'] + [x for x in  sector_names]
+corr_df = df[scolumns].corr()
+pl.pcolor(corr_df)
+
+df.groupby(['date', 'sector'])['polarity'].sum()
+
+test_df = df.groupby(['date', 'sector'])[scolumns].mean()
+test_df['weighted_polarity'] = test_df['weighted_polarity'] * 10
+
+sfeatures = np.hstack([test_df[sector_names].as_matrix(), gen_matrix_for(test_df['weighted_polarity']), gen_matrix_for(test_df['weighted_followers'])])
+sprices = gen_matrix_for(test_df['sector_adj_close'])
+
+Xtrain, Xtest, Ytrain, Ytest = train_test_split(sfeatures, np.log(sprices), test_size=0.33, random_state=42)
 validator()
 
-# try with pct change
-def run_pct_chg_graph_for(sector):
-  df_chg = df[df[sector] == 1]
-  df_sac = df_chg.groupby('date').sector_adj_close.mean()
-  df_wp = df_chg.groupby('date').weighted_polarity.mean()
-  df_chg = pd.concat([df_sac, df_wp],axis=1)
-  df_pct_chg = df_chg.pct_change()
-  best way to handle these outliers?
-  df_pct_chg.loc[df_pct_chg["weighted_polarity"] > 5, 'weighted_polarity'] = 0
-  df_pct_chg.plot(subplots=True, figsize=(6, 6));
+rr = linear_model.Ridge(alpha=0.5)  
+rr.fit(Xtrain, Ytrain)
+spredictions = rr.predict(Xtest)
+print "Logged MSE", mean_squared_error(Ytest, spredictions)
 
-
-# gen_predictions()
-# eval_sector('Consumer Discretionary', df)
-# mean_squared_error(df['sector_adj_close'], df['predictions'])
-# df['sector_adj_close'][df[sector] == 1].plot()
-# df['polarity'][df[sector] == 1].plot()
-# df['sector_adj_close'][df['Industrials'] == 1].hist()
+diff = np.exp(Ytest) - np.exp(spredictions)
+print "Average Difference", diff.mean()

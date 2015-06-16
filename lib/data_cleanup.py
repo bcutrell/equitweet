@@ -220,13 +220,7 @@ class SetupTrain(Cleaner):
             important_words = filter(lambda x: x not in stopwords.words('english'), words)
         return ' '.join(important_words)
 
-# filepath = 'data/train.csv'
-# full_filepath = '/Users/bcutrell/python/equitweet/data/tweets.csv'
-# full_filepath = '/Users/bcutrell/python/equitweet/quoted.csv'
-# full_filepath = '/Users/bcutrell/python/equitweet/data/train200k.csv'
-filepath = '/Users/bcutrell/python/equitweet/data/train200k_new.csv'
-filepath1 = '/Users/bcutrell/python/equitweet/data/train200k_prices.csv'
-SetupTrain(filepath).setup_train_seed_prices(security_prices=True)
-# setup_train_seed_sectors()
-# setup_train_seed_prices()
 
+# Example:
+# filepath = '/Users/bcutrell/python/equitweet/data/train200k_new.csv'
+# SetupTrain(filepath).setup_train_seed_prices(security_prices=True)

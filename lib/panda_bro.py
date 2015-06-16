@@ -14,7 +14,7 @@ import json
 
 class PandaBro(object):
   def __init__(self):
-    with open('./database.json', 'r') as f:
+    with open('./aws_database.json', 'r') as f:
       db_config = json.load(f)
 
     self.db = MyDB(**db_config)
