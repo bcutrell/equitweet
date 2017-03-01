@@ -1,7 +1,7 @@
 # https://github.com/kennethreitz/samplemod/blob/master/sample/core.py
 # http://docs.python-guide.org/en/latest/writing/structure/#structure-of-the-repository
 
-from lib.seeder import SeedStocks, SeedTweets
+from equitweet.seeder import SeedStocks, SeedTweets
 
 import argparse
 import json
