@@ -205,21 +205,9 @@ class SeedPrices(Seeder):
     Populates Prices Table -- Should be Run Daily
     """
     def _insert_prices(self, values):
-        if values:
-            values_string = ','.join(values)
-            self._create_staging_table('tweets')
-            self.db.execute('''
-                INSERT INTO tmp_tweets
-                    (ticker, username, tweet_id, followers_count, polarity, subjectivity, date, full_text)
-                VALUES
-                    {0}
-                '''.format(values_string))
+      return
 
-            self.db.execute('''
-                INSERT INTO tweets
-                SELECT tmp_tweets.* FROM tmp_tweets
-                LEFT JOIN tweets
-                    ON tweets.ticker = tmp_tweets.ticker
-                    AND tweets.tweet_id = tmp_tweets.tweet_id
-                WHERE tweets.ticker IS NULL
-            ''')
+    def run
+      self._get_prices()
+      self._insert_prices(values)
+

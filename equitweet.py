@@ -1,9 +1,10 @@
-from lib.seeder import SeedStocks
-from lib.seeder import SeedTweets, SeedPrices
+# https://github.com/kennethreitz/samplemod/blob/master/sample/core.py
+# http://docs.python-guide.org/en/latest/writing/structure/#structure-of-the-repository
+
+from lib.seeder import SeedStocks, SeedTweets
 
 import argparse
 import json
-
 
 def main(args, db_config):
     cmd = args.command
@@ -25,3 +26,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(args, db_config)
+
