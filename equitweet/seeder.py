@@ -69,7 +69,7 @@ class SeedTweets(Seeder):
             config['consumer_secret']))
 
     def _generate_query_groups(self):
-        self.db.execute('SELECT ticker FROM stocks')
+        self.db.execute("SELECT ticker FROM stocks")
         sp_data = [row[0] for row in self.db.fetchall()]
 
         # Break into groups of 30 to keep query string below 500 chars
@@ -142,7 +142,7 @@ class SeedTweets(Seeder):
             results = self._make_search_request(query_string, max_id=max_id, since_id=since_id)
             remaining -= 1
             since_id = None
-            print 'remaining: {0}'.format(remaining)
+            print('remaining: {0}').format(remaining)
 
             values = []
             for tweet in results['statuses']:
@@ -191,7 +191,7 @@ class SeedTweets(Seeder):
 
         for group in query_groups:
             if remaining < 1:
-                print "Over the limit"
+                print("Over the limit")
                 return
 
             remaining = self._collect_search_results(group, remaining)
@@ -204,10 +204,12 @@ class SeedPrices(Seeder):
     """
     Populates Prices Table -- Should be Run Daily
     """
+    def _get_prices(self, values):
+      return
     def _insert_prices(self, values):
       return
 
-    def run
-      self._get_prices()
+    def run(self, tickers):
+      values = self._get_prices(tickers)
       self._insert_prices(values)
 
