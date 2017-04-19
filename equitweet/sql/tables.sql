@@ -24,3 +24,4 @@ CREATE TABLE IF NOT EXISTS prices (
   adj_close REAL,
   stat_date DATE
 );
+

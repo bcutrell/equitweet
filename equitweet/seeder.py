@@ -1,4 +1,4 @@
-from postgres_db import MyDB
+from .postgres_db import MyDB
 from textblob import TextBlob
 from twitter import Twitter, OAuth
 
