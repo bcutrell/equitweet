@@ -1,16 +1,14 @@
-from lib.seeder import SeedStocks
-from lib.seeder import SeedTweets, SeedPrices
+from equitweet.seeder import SeedStocks, SeedTweets
 
 import argparse
 import json
-
 
 def main(args, db_config):
     cmd = args.command
 
     if cmd == 'seed_stocks':
         SeedStocks(db_config).run()
-    elif cmd == 'tweetalyze':
+    elif cmd == 'seed_tweets':
         SeedTweets(db_config).run()
     elif cmd == 'seed_prices':
         pass
@@ -21,7 +19,8 @@ if __name__ == '__main__':
         db_config = json.load(f)
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('command', choices=['seed_stocks', 'seed_prices', 'tweetalyze'])
+    parser.add_argument('command', choices=['seed_stocks', 'seed_prices', 'seed_tweets'])
     args = parser.parse_args()
 
     main(args, db_config)
+
