@@ -8,7 +8,6 @@ import re
 
 class Seeder(object):
 
-
     def __init__(self, db_config):
         self.db = MyDB(**db_config)
 
@@ -68,6 +67,7 @@ class SeedTweets(Seeder):
             config['consumer_key'],
             config['consumer_secret']))
 
+    # testable
     def _generate_query_groups(self):
         self.db.execute("SELECT ticker FROM stocks")
         sp_data = [row[0] for row in self.db.fetchall()]
