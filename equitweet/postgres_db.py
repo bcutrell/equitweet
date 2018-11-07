@@ -1,4 +1,5 @@
 import psycopg2, json
+# http://initd.org/psycopg/docs/usage.html?highlight=create
 
 class MyDB(object):
 
