@@ -3,4 +3,3 @@ textblob
 pandas
 twitter
 oauth
-zipline
