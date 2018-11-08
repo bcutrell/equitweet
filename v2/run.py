@@ -16,12 +16,13 @@ Desired API (not how it works now...)
         >> equitweet.seed_tweets
         >> equitweet.seed_prices
 
-    TODO:
+    Potential Features:
         >> Exploratory Data Analysis example
         >> Backtesting example
         >> Postgres example
         >> Luigi support
         >> Interactive Dashboard with Plotly.js Dash framework
+        >> Pandas support
 '''
 
 from twitter import Twitter, OAuth
