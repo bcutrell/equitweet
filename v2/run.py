@@ -1,18 +1,57 @@
+'''
+Desired API (not how it works now...)
+    How to use:
+        >> import equitweet
+
+        >> equitweet.init_twitter(twitter_config)
+
+        >> tweets = equitweet.search_tweets_for_ticker('A')
+        >> equitweet.write_tweets_to_file(tweets, filename='a_tweets.csv')
+
+        >> equitweet.batch_search_tweets_for_tickers(['A', 'B'], filename='ab_tweets.csv')
+        >> equitweet.write_tweets_to_file(tweets, filename=)
+
+        >> equitweet.init_db(db_config)
+        >> equitweet.seed_tickers
+        >> equitweet.seed_tweets
+        >> equitweet.seed_prices
+
+    TODO:
+        >> Exploratory Data Analysis example
+        >> Backtesting example
+        >> Postgres example
+        >> Luigi support
+        >> Interactive Dashboard with Plotly.js Dash framework
+'''
+
 from twitter import Twitter, OAuth
 import config
+import csv
 import code # code.interact(local=locals())
-
-twitter_client = Twitter(auth=OAuth(**config.TWITTER_CONFIG))
+import re
 
 def insert_sql_for_tweets(tweets):
     pass
 
-def format_tweets(tweets):
-    return [ format_tweet(tweet) for tweet in tweets ]
+def get_twitter_rates():
+    rate_limits = twitter_client.application.rate_limit_status(resources="search")['resources']['search']['/search/tweets']
+    return rate_limits['reset'], rate_limits['limit'], rate_limits['remaining']
 
-def format_tweet(tweet):
+def write_tweets_to_file(tweets, filename='tweets.csv'):
+    keys = tweets[0].keys()
+
+    with open(filename, 'w') as output_file:
+        dict_writer = csv.DictWriter(output_file, keys)
+        dict_writer.writeheader()
+        dict_writer.writerows(tweets)
+
+def format_tweets(tweets, ticker):
+    return [ format_tweet(tweet, ticker) for tweet in tweets ]
+
+def format_tweet(tweet, ticker):
     return {
-        'text': tweet['text'],
+        'ticker': ticker,
+        'text': tweet['text'].encode(),
         'tweet_id': tweet['id'],
         'username': tweet['user']['name'],
         'followers': tweet['user']['followers_count'],
@@ -20,6 +59,18 @@ def format_tweet(tweet):
         'retweet_count': tweet['retweet_count'],
         'favorite_count': tweet['favorite_count']
     }
+
+def format_batch_tweets(tweets, tickers):
+    # Because we are using an OR query
+    # create entries based on the tickers
+    # that appear in each tweet
+
+    return [
+        format_tweet(tweet, ticker)
+        for ticker in tickers
+        for tweet in tweets
+        if re.search(r'\${0}[^A-Z]'.format(ticker), tweet['text'])
+    ]
 
 def search_tweets(query_string, max_id=None, since_id=None):
     query_args = {
@@ -37,18 +88,37 @@ def search_tweets(query_string, max_id=None, since_id=None):
     return twitter_client.search.tweets(**query_args)
 
 def search_tweets_for_ticker(ticker):
-    results = search_tweets('$' + ticker)
-    return format_tweets(results['statuses'])
+    raw_data = search_tweets('$' + ticker)
+    return format_tweets(raw_data['statuses'], ticker)
 
-def batch_search_tweets_for_tickers(tickers):
+def batch_search_tweets_for_tickers(tickers, remaining=180):
     # Break into groups of 30 to keep query string below 500 chars
     grouped_tickers = [tickers[i:i+30] for i in range(0, len(tickers), 30)]
+
+    results = []
     for ticker_group in grouped_tickers:
         query_string = ' OR '.join('$' + ticker for ticker in ticker_group)
-        results = search_tweets(query_string)
-        print(results['statuses'][0])
+        max_id = None
+        since_id = None # used if db
+
+        while remaining > 0:
+            raw_data = search_tweets(query_string, max_id=max_id, since_id=since_id)
+            results.append(format_batch_tweets(raw_data['statuses'], ticker_group))
+
+            print('remaining: {0}'.format(remaining))
+            remaining -= 1
+
+            if raw_data['search_metadata'].get('next_results'):
+                max_id = raw_data['search_metadata']['next_results'].split('&')[0].lstrip('?max_id=')
+            else:
+                max_id = raw_data['search_metadata']['max_id']
+                break
+
+    return [item for sublist in results for item in sublist] # flatten list
 
 if __name__ == '__main__':
+    twitter_client = Twitter(auth=OAuth(**config.TWITTER_CONFIG))
+    next_reset, max_per_reset, remaining = get_twitter_rates()
     tweets = search_tweets_for_ticker('A')
-    print(tweets[0])
-    # batch_search_tweets_for_tickers(['A', 'B'])
+    tweets = batch_search_tweets_for_tickers(['A', 'B'])
+    write_tweets_to_file(tweets)
