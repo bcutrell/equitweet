@@ -3,20 +3,20 @@ Desired API (not how it works now...)
     How to use:
         >> import equitweet
 
-        >> equitweet.init_twitter(twitter_config)
+        >> client = equitweet.init_twitter(twitter_config)
 
-        >> tweets = equitweet.search_tweets_for_ticker('A')
-        >> equitweet.write_tweets_to_file(tweets, filename='a_tweets.csv')
+        >> tweets = client.search_tweets_for_ticker('A')
+        >> tweets.write_to_file('a_tweets.csv')
 
-        >> equitweet.batch_search_tweets_for_tickers(['A', 'B'], filename='ab_tweets.csv')
-        >> equitweet.write_tweets_to_file(tweets, filename=)
+        >> tweets = client.batch_search_tweets_for_tickers(['A', 'B'], filename='ab_tweets.csv')
+        >> tweets.write_to_file('a_b_tweets.csv')
 
-        >> equitweet.init_db(db_config)
-        >> equitweet.seed_tickers
-        >> equitweet.seed_tweets
-        >> equitweet.seed_prices
+        >> db = equitweet.init_db(db_config)
+        >> db.seed_tickers(tickers)
+        >> db.seed_tweets()
+        >> db.seed_prices()
 
-    Potential Features:
+    Future TODOs:
         >> Exploratory Data Analysis example
         >> Backtesting example
         >> Postgres example
