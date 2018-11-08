@@ -13,7 +13,7 @@ Desired API (not how it works now...)
 
         >> db = equitweet.init_db(db_config)
         >> db.seed_tickers(tickers)
-        >> db.seed_tweets()
+        >> db.seed_tweets(client)
         >> db.seed_prices()
 
     Future TODOs:
