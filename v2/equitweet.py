@@ -23,6 +23,9 @@ Desired API (not how it works now...)
         >> Luigi support
         >> Interactive Dashboard with Plotly.js Dash framework
         >> Pandas support
+
+    Why use this?
+        A fun and simple way to do some social media sentiment analysis on the fly or collect data over time
 '''
 
 from twitter import Twitter, OAuth
