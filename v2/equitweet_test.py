@@ -1,33 +1,44 @@
 import unittest
 import os
+# import code # code.interact(local=locals())
 
 import equitweet
+from twitter import Twitter
 
 class TestEquitweet(unittest.TestCase):
 
-    def setUp(self):
-        #  basedir = os.path.abspath(os.path.dirname(__file__))
-        # 'sqlite:///' + os.path.join(basedir, 'data.sqlite')
-        # db.create_all()
-        pass
+    FAKE_CONFIG = {
+        "consumer_key": 'fake',
+        "consumer_secret": 'fake',
+        "token": 'fake',
+        "token_secret": 'fake'
+    }
 
-    def tearDown(self):
-        # db.session.remove()
-        # db.drop_all()
-        pass
+    FAKE_TWEET = {
+        'ticker': 'fake',
+        'text': 'fake',
+        'tweet_id': 'fake',
+        'username': 'fake',
+        'followers': 'fake',
+        'created_date': 'fake',
+        'retweet_count': 'fake',
+        'favorite_count': 'fake'
+    }
 
     def test_init_twitter(self):
-        client = equitweet.init_twitter('f', 'a', 'k', 'e')
+        client = equitweet.init_twitter(self.FAKE_CONFIG)
         assert client
+        assert type(client.t) == Twitter
 
+    def test_write_file(self):
+        client = equitweet.init_twitter(self.FAKE_CONFIG)
+        assert client.NO_TWEETS_MSG == client.write_tweets_to_file(filename='fake.csv')
 
-    def test_init_db(self):
-        db = equitweet.init_db('f', 'a', 'k', 'e')
-        assert db
+        client.tweets.append(self.FAKE_TWEET)
+        client.write_tweets_to_file(filename='fake.csv')
 
-    def write_to_file(self):
-        pass
-
+        assert os.path.isfile('fake.csv')
+        os.remove('fake.csv')
 
 if __name__ == '__main__':
     unittest.main()
