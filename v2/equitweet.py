@@ -3,7 +3,7 @@ import config
 import csv
 import re
 
-class Client():
+class Equitweet():
     NO_TWEETS_MSG = 'There are no tweets'
 
     def __init__(self, config):
@@ -101,11 +101,5 @@ class Client():
             dict_writer.writeheader()
             dict_writer.writerows(self.tweets)
 
-def init_twitter(config):
-    return Client(config)
-
-if __name__ == '__main__':
-    eqt = init_twitter(config.TWITTER_CONFIG)
-    eqt.search_tweets_for_ticker('A')
-    eqt.batch_search_tweets_for_tickers(['A', 'B'])
-    eqt.write_tweets_to_file(filename='fake.csv')
+def init_equitweet(config):
+    return Equitweet(config)
