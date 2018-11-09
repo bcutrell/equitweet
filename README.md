@@ -4,9 +4,12 @@ equitweet
 ``` {.sourceCode .python}
 from equitweet import init_equitweet
 
-eqt = init_twitter(config.TWITTER_CONFIG)
+eqt = init_equitweet(config.TWITTER_CONFIG)
+
 eqt.search_tweets_for_ticker('A')
+
 eqt.batch_search_tweets_for_tickers(['A', 'B'])
+
 eqt.write_tweets_to_file(filename='tweets.csv')
 ```
 
