@@ -1,4 +1,7 @@
 *.pyc
+*.egg-info
+build
+
 config.py
 .vscode
 __pycache__
