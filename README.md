@@ -1,10 +1,17 @@
-equitweet
+Equitweet
 =========
 
 ``` {.sourceCode .python}
 from equitweet import init_equitweet
 
-eqt = init_equitweet(config.TWITTER_CONFIG)
+config = {
+  "consumer_key": 'fake',
+  "consumer_secret": 'fake',
+  "token": 'fake',
+  "token_secret": 'fake'
+}
+
+eqt = init_equitweet(config)
 
 eqt.search_tweets_for_ticker('A')
 
