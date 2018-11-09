@@ -19,6 +19,7 @@ setuptools.setup(
   package_data={'': ['LICENSE']},
   install_requires=REQUIRED,
   python_requires=REQUIRES_PYTHON,
+  license='MIT',
   include_package_data=True,
   classifiers=[
   "Programming Language :: Python :: 3",
