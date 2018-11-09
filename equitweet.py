@@ -1,5 +1,5 @@
 from twitter import Twitter, OAuth
-import config
+
 import csv
 import re
 
