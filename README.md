@@ -4,9 +4,11 @@ Equitweet
 ``` {.sourceCode .python}
 import equitweet
 
-equitweet.search('A')
+# search for cash tag $A
+results = equitweet.search('A')
 
-equitweet.batch_search(['A', 'B'])
+# search for cash tags $A, $B
+batch_results = equitweet.batch_search(['A', 'B'])
 ```
 
 Next Steps
