@@ -2,22 +2,11 @@ Equitweet
 =========
 
 ``` {.sourceCode .python}
-from equitweet import init_equitweet
+import equitweet
 
-config = {
-  "consumer_key": 'fake',
-  "consumer_secret": 'fake',
-  "token": 'fake',
-  "token_secret": 'fake'
-}
+equitweet.search('A')
 
-eqt = init_equitweet(config)
-
-eqt.search_tweets_for_ticker('A')
-
-eqt.batch_search_tweets_for_tickers(['A', 'B'])
-
-eqt.write_tweets_to_file(filename='tweets.csv')
+equitweet.batch_search(['A', 'B'])
 ```
 
 Next Steps
