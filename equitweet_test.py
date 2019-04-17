@@ -26,16 +26,16 @@ class TestEquitweet(unittest.TestCase):
     }
 
     def test_init_twitter(self):
-        eqt = equitweet.init_equitweet(self.FAKE_CONFIG)
-        assert eqt
-        assert type(eqt.t) == Twitter
+        client = equitweet.get_client(self.FAKE_CONFIG)
+        assert client
+        assert type(client.t) == Twitter
 
     def test_write_file(self):
-        eqt = equitweet.init_equitweet(self.FAKE_CONFIG)
-        assert eqt.NO_TWEETS_MSG == eqt.write_tweets_to_file(filename='fake.csv')
+        client = equitweet.get_client(self.FAKE_CONFIG)
+        assert client.NO_TWEETS_MSG == client.write_tweets_to_file(filename='fake.csv')
 
-        eqt.tweets.append(self.FAKE_TWEET)
-        eqt.write_tweets_to_file(filename='fake.csv')
+        client.tweets.append(self.FAKE_TWEET)
+        client.write_tweets_to_file(filename='fake.csv')
 
         assert os.path.isfile('fake.csv')
         os.remove('fake.csv')

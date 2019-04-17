@@ -1,0 +1,12 @@
+# How to use:
+#   1. Add keys and tokens
+#   2. Copy the file
+#     > cp config.py.template config.py
+
+TWITTER_CONFIG = {
+    "consumer_key": "",
+    "consumer_secret": "",
+    "token": "",
+    "token_secret": ""
+}
+
