@@ -9,6 +9,9 @@ if not exists:
 import config
 client = Client(config.TWITTER_CONFIG)
 
+def get_client(config):
+    return Client(config)
+
 def search(ticker):
     client.search_tweets('$' + ticker)
     return client.tweets
